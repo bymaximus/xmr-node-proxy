@@ -466,6 +466,16 @@ function balanceWorkers(){
     the approximate hashrate that should be moved between pools once the general hashes/second per pool/worker
     is determined.
      */
+	 
+    // here we do a bit of a hack and "cache" the activeWorkers
+    // this file is parsed for the http://host/json endpoint
+    if(global.config.httpEnable) {
+        fs.writeFile("pools.json", JSON.stringify(poolStates), function(err) {
+            if(err)
+                return console.log(err);
+        });
+    }	 
+	 
     for (let coin in poolStates){
         if (poolStates.hasOwnProperty(coin) && minerStates.hasOwnProperty(coin)){
             let coinMiners = minerStates[coin];
@@ -980,6 +990,16 @@ function activateHTTP() {
 				}
 				res.end();
 			});
+		} else if(req.url.substring(0, 5) == "/pools") {
+			fs.readFile('pools.json', 'utf8', (err, data) => {
+				if(err) {
+					res.writeHead(503);
+				} else {
+					res.writeHead(200, {'Content-type':'application/json'});
+					res.write(data + "\r\n");
+				}
+				res.end();
+			});			
 		} else {
 			res.writeHead(404);
 			res.end();
